@@ -1,24 +1,84 @@
-// Import necessary hooks and functions from React.
-import { useContext, useReducer, createContext } from "react";
-import storeReducer, { initialStore } from "../store"  // Import the reducer and the initial state.
+import React, { useReducer, useContext, createContext } from "react"
 
-// Create a context to hold the global state of the application
-// We will call this global state the "store" to avoid confusion while using local states
-const StoreContext = createContext()
+const GlobalContext = createContext()
 
-// Define a provider component that encapsulates the store and warps it in a context provider to 
-// broadcast the information throught all the app pages and components.
-export function StoreProvider({ children }) {
-    // Initialize reducer with the initial state.
-    const [store, dispatch] = useReducer(storeReducer, initialStore())
-    // Provide the store and dispatch method to all child components.
-    return <StoreContext.Provider value={{ store, dispatch }}>
-        {children}
-    </StoreContext.Provider>
+const initialState = {
+    contactsArray: [],
+    singleContact: null,
+    todos: [] // Add this for compatibility with your existing code
 }
 
-// Custom hook to access the global state and dispatch function.
-export default function useGlobalReducer() {
-    const { dispatch, store } = useContext(StoreContext)
-    return { dispatch, store };
+const globalReducer = (state, action) => {
+    console.log('Reducer action:', action.type, action.payload) // Debug log
+    
+    switch (action.type) {
+        case "set-contact-list":
+            return {
+                ...state,
+                contactsArray: action.payload || []
+            }
+        case "set-single-contact":
+            return {
+                ...state,
+                singleContact: action.payload
+            }
+        case "clear-single-contact":
+            return {
+                ...state,
+                singleContact: null
+            }
+        case "add-contact":
+            return {
+                ...state,
+                contactsArray: [...state.contactsArray, action.payload]
+            }
+        case "update-contact":
+            return {
+                ...state,
+                contactsArray: state.contactsArray.map(contact =>
+                    contact.id === action.payload.id ? action.payload : contact
+                )
+            }
+        case "delete-contact":
+            return {
+                ...state,
+                contactsArray: state.contactsArray.filter(contact => contact.id !== action.payload)
+            }
+        case "add_task": // Keep this for compatibility with Demo component
+            const { id, color } = action.payload
+            return {
+                ...state,
+                todos: state.todos.map((todo) =>
+                    todo.id === id ? { ...todo, background: color } : todo
+                )
+            }
+        default:
+            console.warn('Unknown action type:', action.type)
+            return state
+    }
 }
+
+export const StoreProvider = ({ children }) => {
+    const [store, dispatch] = useReducer(globalReducer, initialState)
+
+    console.log('Store Provider - Current state:', store) // Debug log
+
+    return (
+        <GlobalContext.Provider value={{ store, dispatch }}>
+            {children}
+        </GlobalContext.Provider>
+    )
+}
+
+// Also export with other names for compatibility
+export const GlobalProvider = StoreProvider
+
+const useGlobalReducer = () => {
+    const context = useContext(GlobalContext)
+    if (!context) {
+        throw new Error("useGlobalReducer must be used within StoreProvider")
+    }
+    return context
+}
+
+export default useGlobalReducer
