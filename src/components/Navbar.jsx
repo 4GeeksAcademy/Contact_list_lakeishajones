@@ -13,11 +13,11 @@ export const Navbar = () => {
                 </Link>
                 <h1>📱 My Contacts</h1>
                 <div className="ml-auto">
-                    <Link to="/submit">
+                    {/* <Link to="/submit">
                         <button className="btn btn-primary">
                             ➕ Add New Contact
                         </button>
-                    </Link>
+                    </Link> */}
                 </div>
             </div>
         </nav>
